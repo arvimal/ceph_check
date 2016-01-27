@@ -6,6 +6,10 @@ import rpm
 # import logging
 # import argparse
 
+# Refer
+# http://permalink.gmane.org/gmane.comp.file-systems.ceph.user/23090
+# https://github.com/ceph/calamari/blob/master/salt/srv/salt/_modules/ceph.py
+
 conf = "/etc/ceph/ceph.conf"
 ad_key = "/etc/ceph/ceph.client.admin.keyring"
 
@@ -18,28 +22,27 @@ class CephCheck(object):
 
     def verify(self):
         # 1. Check for ceph-deploy rpm
+        print("\nceph-check :\n")
+        print("Check #1 :")
         ts = rpm.TransactionSet()
         mi = ts.dbMatch()
-        mi.pattern('name', rpm.RPMMIRE_GLOB, 'ceph-deploy')
+        mi.pattern('name', rpm.RPMMIRE_GLOB, 'ceph*')
+        print("Checking ceph package installations.\n")
         try:
             for h in mi:
-                print("Checking ceph package installations.\n")
                 print("%s-%s-%s" % (h['name'], h['version'], h['release']))
         except:
-            print("Not able to find `ceph-deploy`")
+            print("Not able to find `ceph packages`")
         # 2. Check for ceph.conf
-        if not self.conf:
-            print("/etc/ceph/ceph.conf not found")
-            print("Is this node part of the cluster?")
-
-
-        self.verify_conf()
-
-    def verify_conf(self):
-        # if self.conf:
-        print("\nVerifying configurations!")
-        conf_file = open(self.conf)
-        pass
+        print("\nCheck #2 :")
+        try:
+            conf_file = open(self.conf)
+            print(type(conf_file))
+        except:
+            print(self.conf, "doesn't exist!")
+        #if not self.conf:
+        #    print("/etc/ceph/ceph.conf not found")
+        #    print("Is this node part of the cluster?")
 
     def connect(self):
         """Initialize the cluster connection"""
