@@ -5,7 +5,7 @@ import time
 import subprocess
 import sys
 import os
-import simplejson
+import json
 import ConfigParser
 
 CONFFILE = "/etc/ceph/ceph.conf"
@@ -60,22 +60,22 @@ class CephCheck(object):
             with open(report, "w") as output:
                 print("\nRunning 'ceph report' and saving to", report, '\n')
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
-                self.report_parse()
+                self.report_parse(report)
         except IOError:
             # It's very unlikely we'll hit this and exit here.
             print("\nCannot create", report)
             print("Check permissions, exiting!\n")
             sys.exit()
 
-    def report_parse(self):
+    def report_parse(self, report):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
         print("RFE : 'python-simplejson' into RHCS or RHEL7 channels\n")
-        with open(self.report) as obj:
+        with open(report) as obj:
             print("\nParsing ceph report - Remove this line\n")
-            json_obj = simplejson.load(obj)
-            print("Cluster status :-", j_obj['health']['overall_status'])
+            json_obj = json.load(obj)
+            print("Cluster status :-", json_obj['health']['overall_status'])
 
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
@@ -85,8 +85,9 @@ class CephCheck(object):
         """
         pass
 
-checker = CephCheck(CONFFILE, KEYRING)
-# Testing conf and keyring paths.
-# print(checker.conf)
-# print(checker.keyring)
-checker.notify()
+if __name__ == "__main__":
+    checker = CephCheck(CONFFILE, KEYRING)
+    # Testing conf and keyring paths.
+    # print(checker.conf)
+    # print(checker.keyring)
+    checker.notify()
