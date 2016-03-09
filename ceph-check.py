@@ -8,9 +8,13 @@ import os
 import json
 import ConfigParser
 
+__author__ = "Vimal A.R"
+__version__ = "v0.1"
+__license__ = "GNU GPL v2.0"
+__email__ = "vimal@redhat.com"
+
 CONFFILE = "/etc/ceph/ceph.conf"
 KEYRING = "/etc/ceph/ceph.client.admin.keyring"
-# REPORT = "/tmp/ceph-report-"+time.strftime("%d%m%Y-%H%M%S")
 
 
 class CephCheck(object):
@@ -71,7 +75,6 @@ class CephCheck(object):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
-        print("RFE : 'python-simplejson' into RHCS or RHEL7 channels\n")
         with open(report) as obj:
             print("\nParsing ceph report - Remove this line\n")
             json_obj = json.load(obj)
