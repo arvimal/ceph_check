@@ -6,6 +6,7 @@ import subprocess
 import sys
 import os
 import json
+import getpass
 import ConfigParser
 
 __author__ = "Vimal A.R"
@@ -27,11 +28,9 @@ class CephCheck(object):
     def notify(self):
         print("\nRunning ceph-check :-\n")
         print("Conditions for successfully executing this program:-")
-        print("1. This program should be executed from the Ceph Admin node.")
-        print(
-            "2. This should be executed as the 'ceph' user, or as the user as which 'ceph-deploy' was run.")
-        print(
-            "3. The user executing this program should have 'read' permissions to the Ceph client Admin keyring.\n")
+        print("* This program should be executed from the Ceph Admin node.")
+        print("* This should be executed as the 'ceph' user, or as the user as which 'ceph-deploy' was run.")
+        print("* The user should have read permissions to the Ceph client Admin keyring.\n")
         self.keyring_check()
 
     def keyring_check(self):
@@ -40,22 +39,27 @@ class CephCheck(object):
         """
         config_file = ConfigParser.SafeConfigParser()
         config_file.read(CONFFILE)
+        print("1. Admin keyring\n")
         try:
-            print("Checking for custom admin keyring path in", CONFFILE)
+            print("Checking if a custom admin keyring is present")
             keyring_custom = config_file.get('global', 'keyring')
-            print("Admin keyring found at", keyring_custom)
+            print(CONFFILE, "lists admin keyring at", keyring_custom)
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
             print("No custom keyring found, falling back to", KEYRING)
             self.keyring_permission(KEYRING)
 
     def keyring_permission(self, keyring_custom):
-        if os.access(keyring_custom, os.R_OK):
-            self.ceph_report()
+        if os.path.isfile(keyring_custom):
+            if os.access(keyring_custom, os.R_OK):
+                self.ceph_report()
+            else:
+                print("\nERROR: User", getpass.getuser(), "does not have read permissions for", keyring_custom)
+                print("\nExiting!\n")
+                sys.exit()
         else:
-            print(
-                os.getlogin(), "does not have read permissions for", keyring_custom)
-            print("Exiting!\n")
+            print("\n", keyring_custom, "does not exist!")
+            print("\nExiting!\n")
             sys.exit()
 
     def ceph_report(self):
