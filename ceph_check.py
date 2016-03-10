@@ -69,7 +69,6 @@ class CephCheck(object):
         print("\n2. Cluster report\n")
         try:
             with open(report, "w") as output:
-
                 print("Generating cluster status report")
                 print("Saved to", report)
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
@@ -92,9 +91,17 @@ class CephCheck(object):
             if cluster_status != "HEALTH_OK":
                 # We iterate over each object within the "summary" dict,
                 # and print the 'value' for the 'summary' key
+                print("\t*Summary: ")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
+        self.mon_status_check(report)
+        self.osd_status_check(report)
 
+    def mon_status_check(self, report):
+        print("\n\t* MON status: ")
+
+    def osd_status_check(self, report):
+        print("\n\t* OSD status: ")
 
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
