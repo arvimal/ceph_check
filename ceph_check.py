@@ -9,6 +9,7 @@ import json
 import getpass
 import ConfigParser
 
+
 __author__ = "Vimal A.R"
 __version__ = "v0.1"
 __license__ = "GNU GPL v2.0"
@@ -26,7 +27,7 @@ class CephCheck(object):
         self.keyring = keyring
 
     def notify(self):
-        print("\nRunning ceph-check :-\n")
+        print("\nRunning ceph_check :-\n")
         print("Conditions for successfully executing this program:-")
         print("* This program should be executed from the Ceph Admin node.")
         print("* This should be executed as the 'ceph' user, or as the user as which 'ceph-deploy' was run.")
@@ -41,12 +42,13 @@ class CephCheck(object):
         config_file.read(CONFFILE)
         print("1. Admin keyring\n")
         try:
-            print("Checking if a custom admin keyring is present")
+            print("Checking if a custom admin keyring is present.")
             keyring_custom = config_file.get('global', 'keyring')
             print(CONFFILE, "lists admin keyring at", keyring_custom)
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
-            print("No custom keyring found, falling back to", KEYRING)
+            print("No custom keyring found")
+            print("Falling back to", KEYRING)
             self.keyring_permission(KEYRING)
 
     def keyring_permission(self, keyring_custom):
@@ -58,15 +60,18 @@ class CephCheck(object):
                 print("\nExiting!\n")
                 sys.exit()
         else:
-            print("\n", keyring_custom, "does not exist!")
+            print("\nCannot find keyring at", keyring_custom)
             print("\nExiting!\n")
             sys.exit()
 
     def ceph_report(self):
-        report = "/tmp/ceph-report-" + time.strftime("%d%m%Y-%H%M%S")
+        report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
+        print("\n2. Cluster report\n")
         try:
             with open(report, "w") as output:
-                print("\nRunning 'ceph report' and saving to", report, '\n')
+
+                print("Generating cluster status report")
+                print("Saved to", report)
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
                 self.report_parse(report)
         except IOError:
@@ -79,10 +84,17 @@ class CephCheck(object):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
+        print("\n3. Analyzing the report")
         with open(report) as obj:
-            print("\nParsing ceph report - Remove this line\n")
             json_obj = json.load(obj)
-            print("Cluster status :-", json_obj['health']['overall_status'])
+            cluster_status = json_obj['health']['overall_status']
+            print("\nCluster status : ", cluster_status,"\n")
+            if cluster_status != "HEALTH_OK":
+                # We iterate over each object within the "summary" dict,
+                # and print the 'value' for the 'summary' key
+                for i in json_obj['health']['summary']:
+                    print(i['summary'])
+
 
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
