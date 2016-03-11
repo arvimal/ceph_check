@@ -33,4 +33,4 @@ should be mentioned in /etc/ceph/ceph.conf for the Ceph cluster to work properly
 
 7. Checks for colocated MONs and OSDs
 
-8. 
+8. Checks for RHCS Tech-preview features
