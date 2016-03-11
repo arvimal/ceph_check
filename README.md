@@ -31,7 +31,6 @@ should be mentioned in /etc/ceph/ceph.conf for the Ceph cluster to work properly
 
 6. Reports if a single journal disk is being used for more than 6 OSD disks, since 6 is the suggested value.
 
-7. <More to be added> 
+7. Checks for colocated MONs and OSDs
 
-
-
+8. 
