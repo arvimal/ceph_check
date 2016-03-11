@@ -35,8 +35,8 @@ class CephCheck(object):
         self.keyring_check()
 
     def keyring_check(self):
-        """Check if a custom keyring exists
-        :rtype: basestring
+        """
+        Check if a custom keyring exists
         """
         config_file = ConfigParser.SafeConfigParser()
         config_file.read(CONFFILE)
@@ -52,6 +52,9 @@ class CephCheck(object):
             self.keyring_permission(KEYRING)
 
     def keyring_permission(self, keyring_custom):
+        """
+        Check the existence and permission of the keyring
+        """
         if os.path.isfile(keyring_custom):
             if os.access(keyring_custom, os.R_OK):
                 self.ceph_report()
@@ -70,8 +73,8 @@ class CephCheck(object):
         try:
             with open(report, "w") as output:
                 print("Generating cluster status report")
-                print("Saved to", report)
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
+                print("Saved to", report)
                 self.report_parse(report)
         except IOError:
             # It's very unlikely we'll hit this and exit here.
@@ -103,6 +106,12 @@ class CephCheck(object):
     def osd_status_check(self, report):
         print("\n\t* OSD status: ")
 
+    def pool_info(self, report):
+        print("\n\t* Pool status")
+
+    def pg_info(self, report):
+        print("\n\t* Placement Group status")
+
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
             a) Hostname
@@ -113,7 +122,4 @@ class CephCheck(object):
 
 if __name__ == "__main__":
     checker = CephCheck(CONFFILE, KEYRING)
-    # Testing conf and keyring paths.
-    # print(checker.conf)
-    # print(checker.keyring)
     checker.notify()
