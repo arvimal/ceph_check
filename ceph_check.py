@@ -25,13 +25,10 @@ class CephCheck(object):
     def __init__(self, conffile, keyring):
         self.conf = conffile
         self.keyring = keyring
+        self.help()
 
     def notify(self):
-        print("\nRunning ceph_check :-\n")
-        print("Conditions for successfully executing this program:-")
-        print("* This program should be executed from the Ceph Admin node.")
-        print("* This should be executed as the 'ceph' user, or as the user as which 'ceph-deploy' was run.")
-        print("* The user should have read permissions to the Ceph client Admin keyring.\n")
+        print("## Running ceph_check :-\n")
         self.keyring_check()
 
     def keyring_check(self):
@@ -39,40 +36,40 @@ class CephCheck(object):
         Check if a custom keyring exists
         """
         config_file = ConfigParser.SafeConfigParser()
-        config_file.read(CONFFILE)
-        print("1. Admin keyring\n")
+        config_file.read(self.conf)
+        print("## Checking keyring -\n")
         try:
-            print("Checking if a custom admin keyring is present.")
+            print("-Checking for a custom admin keyring.")
             keyring_custom = config_file.get('global', 'keyring')
-            print(CONFFILE, "lists admin keyring at", keyring_custom)
+            print(self.keyring, "lists admin keyring at", keyring_custom)
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
-            print("No custom keyring found")
-            print("Falling back to", KEYRING)
-            self.keyring_permission(KEYRING)
+            print("-No custom keyring found")
+            print("-Falling back to", self.keyring)
+            self.keyring_permission(self.keyring)
 
-    def keyring_permission(self, keyring_custom):
+    def keyring_permission(self, keyring):
         """
         Check the existence and permission of the keyring
         """
-        if os.path.isfile(keyring_custom):
-            if os.access(keyring_custom, os.R_OK):
+        if os.path.isfile(self.keyring):
+            if os.access(self.keyring, os.R_OK):
                 self.ceph_report()
             else:
-                print("\nERROR: User", getpass.getuser(), "does not have read permissions for", keyring_custom)
+                print("\nERROR: User", getpass.getuser(),
+                      "does not have read permissions for", self.keyring)
                 print("\nExiting!\n")
                 sys.exit()
         else:
-            print("\nCannot find keyring at", keyring_custom)
+            print("\nCannot find keyring at", keyring)
             print("\nExiting!\n")
             sys.exit()
 
     def ceph_report(self):
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
-        print("\n2. Cluster report\n")
+        print("\n## Generating a cluster report -\n")
         try:
             with open(report, "w") as output:
-                print("Generating cluster status report")
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
                 print("Saved to", report)
                 self.report_parse(report)
@@ -86,39 +83,64 @@ class CephCheck(object):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
-        print("\n3. Analyzing the report")
+        print("\n## Analysing the cluster report -")
         with open(report) as obj:
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
-            print("\nCluster status : ", cluster_status,"\n")
+            print("\n-Cluster status : ", cluster_status, "\n")
+            # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
+                # Print a general cluster summary
                 # We iterate over each object within the "summary" dict,
                 # and print the 'value' for the 'summary' key
-                print("\t*Summary: ")
+                print("-Summary: ")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
-        self.mon_status_check(report)
-        self.osd_status_check(report)
+            # Calling all helper functions irrespective of cluster status
+            self.mon_status_check(report)
+            self.osd_status_check(report)
+            self.pool_info(report)
+            self.pg_info(report)
+        # Calling the generic system config checks
+        self.ssh_check()
+
+    def get_osd_and_mon(report):
+        """Get the list of MONs and OSDs from the report"""
+
+        #Note for self: Refer ceph_osd_meta.py from ceph report parse
+
+
+# 1. Cluster checks (MON, OSD, PG, Pool etc..)
 
     def mon_status_check(self, report):
-        print("\n\t* MON status: ")
+        print("\n# MON status: \n")
 
     def osd_status_check(self, report):
-        print("\n\t* OSD status: ")
+        print("\n# OSD status: \n")
 
     def pool_info(self, report):
-        print("\n\t* Pool status")
+        print("\n# Pool status: \n")
 
     def pg_info(self, report):
-        print("\n\t* Placement Group status")
+        print("\n# Placement Group status: \n")
 
+# 2. System config checks (SSH access, hardware, RAID etc.. )
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
             a) Hostname
             b) IP address
             c) ....
         """
+        print("Checking SSH passwordless access to the Cluster nodes")
+        print("Get a dict of hostname and IP address of MONs and OSD nodes")
         pass
+
+    def help(self):
+        print("\n# Conditions for successfully executing this program:-\n")
+        print("-Best run from the Admin node, as the `ceph` user.")
+        print("-Or as the user as which `ceph-deploy` was run.")
+        print("-The user should have read permissions to the Admin keyring.\n")
+
 
 if __name__ == "__main__":
     checker = CephCheck(CONFFILE, KEYRING)
