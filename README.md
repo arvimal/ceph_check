@@ -8,13 +8,14 @@ this is a great way to prevent problems in the future.
 
 ## Points worth considering:
 
-1. This program should be run from the Ceph Administrator node, as the 'ceph' user.
-2. If a custom username has been used to setup the Ceph cluster, use that account to execute the program.
-3. The user running this script should have *read* permissions to the admin keyring.
-4. SSH passwordless login should be setup for the user to the Ceph cluster nodes.
+1. This program is suggested to be run from the Admin node, as the `ceph` user.
+2. Or execute it as the user with which `ceph-deploy` was executed.
+3. The user should have read permissions to the Admin keyring.
+4. SSH passwordless access should be available to the cluster nodes.
 
-The above four points are the suggested requirements for an RHCS/Ceph installation, and hence can be expected 
-to be present in a RHCS/Ceph cluster. 
+All the above conditions would be available if this is executed as the user used to 
+run 'ceph-deploy', from the Administrative node.
+ogram should be run from the Ceph Administrator node, as the 'ceph' user.
 
 ## Features:
 
@@ -35,4 +36,3 @@ should be mentioned in /etc/ceph/ceph.conf for the Ceph cluster to work properly
 
 8. Checks for RHCS Tech-preview features
 
-Testing passwordless github commits
