@@ -28,7 +28,7 @@ class CephCheck(object):
         self.help()
 
     def notify(self):
-        print("## Running ceph_check :-\n")
+        print("## Running ceph_check\n")
         self.keyring_check()
 
     def keyring_check(self):
@@ -67,19 +67,19 @@ class CephCheck(object):
 
     def ceph_report(self):
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
-        print("\n## Generating a cluster report -\n")
+        print("\n## Generating cluster report -\n")
         try:
             with open(report, "w") as output:
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
                 print("Saved to", report)
-                self.report_parse(report)
+                self.report_parse_summary(report)
         except IOError:
             # It's very unlikely we'll hit this and exit here.
             print("\nCannot create", report)
             print("Check permissions, exiting!\n")
             sys.exit()
 
-    def report_parse(self, report):
+    def report_parse_summary(self, report):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
@@ -87,33 +87,43 @@ class CephCheck(object):
         with open(report) as obj:
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
-            print("\n-Cluster status : ", cluster_status, "\n")
+            print("\n#Cluster status : ", cluster_status, "\n")
             # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
                 # Print a general cluster summary
                 # We iterate over each object within the "summary" dict,
                 # and print the 'value' for the 'summary' key
-                print("-Summary: ")
+                print("#Cluster summary:\n")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
-            # Calling all helper functions irrespective of cluster status
-            self.mon_status_check(report)
-            self.osd_status_check(report)
-            self.pool_info(report)
-            self.pg_info(report)
+        self.cluster_status(report)
+
+    def cluster_status(self, report):
+        # Calling all helper functions irrespective of cluster status
+        self.mon_status_check(report)
+        self.osd_status_check(report)
+        self.pool_info(report)
+        self.pg_info(report)
         # Calling the generic system config checks
         self.ssh_check()
 
     def get_osd_and_mon(report):
         """Get the list of MONs and OSDs from the report"""
 
-        #Note for self: Refer ceph_osd_meta.py from ceph report parse
+        # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
 
 # 1. Cluster checks (MON, OSD, PG, Pool etc..)
 
     def mon_status_check(self, report):
         print("\n# MON status: \n")
+        with open(report) as obj:
+            json_obj = json.load(obj)
+            print("Mon map epoch: %s\n" % str(json_obj['monmap']['epoch']))
+            for mon in json_obj['monmap']['mons']:
+                print("Monitor rank : %s" % str(mon['rank']))
+                print("Host name    : %s" % str(mon['name']))
+                print("IP Address   : %s\n" % str(mon['addr']))
 
     def osd_status_check(self, report):
         print("\n# OSD status: \n")
@@ -136,9 +146,8 @@ class CephCheck(object):
         pass
 
     def help(self):
-        print("\n# Conditions for successfully executing this program:-\n")
-        print("-Best run from the Admin node, as the `ceph` user.")
-        print("-Or as the user as which `ceph-deploy` was run.")
+        print("\n## Conditions for successfully executing this program:-\n")
+        print("-Best run from the Admin node, as the user assigned to run `ceph-deploy`.")
         print("-The user should have read permissions to the Admin keyring.\n")
 
 
