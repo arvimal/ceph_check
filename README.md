@@ -1,21 +1,24 @@
 # ceph_check 
 
-ceph_check is a reporting tool, which checks a newly installed or an existing Ceph cluster, 
-and report various unsupported or unoptimal configurations.  
+`ceph_check` is a reporting tool. 
 
-An installation has to be according to the suggested guidelines, and checking/confirming 
-this is a great way to prevent problems in the future.  
+It can be executed on a Ceph cluster, either a newlys installed or existing one. It lets the end user know 
+about various unsupported and inoptimal configurations.   
+
+A distributed complicated storage solution like Ceph has to be according to the suggested guidelines, else
+the performance may suffer. A tool like `ceph_check` can check and let the user know such mis-configurations 
+which can end up being pain points later.  
 
 ## Points worth considering:
 
 1. This program is suggested to be run from the Admin node, as the `ceph` user.
-2. Or execute it as the user with which `ceph-deploy` was executed.
+2. Or execute it as the user with which `ceph-deploy` was executed. 
+	- This is because SSH passwordless access would be available for such user accounts.
 3. The user should have read permissions to the Admin keyring.
 4. SSH passwordless access should be available to the cluster nodes.
 
-All the above conditions would be available if this is executed as the user used to 
-run 'ceph-deploy', from the Administrative node.
-ogram should be run from the Ceph Administrator node, as the 'ceph' user.
+All the above conditions would be met if this is executed as the user used to run 'ceph-deploy', 
+from the Administrative node.
 
 ## Features:
 
