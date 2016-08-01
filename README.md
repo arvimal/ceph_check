@@ -2,12 +2,13 @@
 
 `ceph_check` is a reporting tool. 
 
-It can be executed on a Ceph cluster, either a newlys installed or existing one. It lets the end user know 
-about various unsupported and inoptimal configurations.   
+It can be executed on a Ceph cluster, either newly installed or an existing one. It lets the end user know 
+about various unsupported and unoptimal configurations.   
 
-A distributed complicated storage solution like Ceph has to be according to the suggested guidelines, else
-the performance may suffer. A tool like `ceph_check` can check and let the user know such mis-configurations 
-which can end up being pain points later.  
+A distributed storage solution like Ceph has to be installed according to specific guidelines. This is important
+for optimal performance and ease of use. 
+
+A tool such as `ceph_check` can check and let the user know such configurations which can end up being pain points later.  
 
 ## Points worth considering:
 
