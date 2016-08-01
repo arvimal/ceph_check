@@ -73,11 +73,18 @@ class CephCheck(object):
                 subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
                 print("Saved to", report)
                 self.report_parse_summary(report)
+        # Write an exception handler for a timeout error, example:
+        # $ ceph report
+        # 2016-07-14 20:06:53.996526 7efdc365b700  0 monclient(hunting): authenticate timed out after 300
+        # 2016-07-14 20:06:53.996559 7efdc365b700  0 librados: client.admin authentication error (110) Connection timed out
+        # Error connecting to cluster: TimedOut
+
         except IOError:
             # It's very unlikely we'll hit this and exit here.
             print("\nCannot create", report)
             print("Check permissions, exiting!\n")
             sys.exit()
+
 
     def report_parse_summary(self, report):
         """Gets the MON/OSD node list for now
@@ -109,11 +116,11 @@ class CephCheck(object):
 
     def get_osd_and_mon(report):
         """Get the list of MONs and OSDs from the report"""
-
+        pass
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
 
-# 1. Cluster checks (MON, OSD, PG, Pool etc..)
+    # 1. Cluster checks (MON, OSD, PG, Pool etc..)
 
     def mon_status_check(self, report):
         print("\n# MON status: \n")
@@ -124,6 +131,7 @@ class CephCheck(object):
                 print("Monitor rank : %s" % str(mon['rank']))
                 print("Host name    : %s" % str(mon['name']))
                 print("IP Address   : %s\n" % str(mon['addr']))
+                print("Port         : %s\n" % str(mon['addr']).strip([":"]))
 
     def osd_status_check(self, report):
         print("\n# OSD status: \n")
@@ -134,7 +142,7 @@ class CephCheck(object):
     def pg_info(self, report):
         print("\n# Placement Group status: \n")
 
-# 2. System config checks (SSH access, hardware, RAID etc.. )
+    # 2. System config checks (SSH access, hardware, RAID etc.. )
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
             a) Hostname
