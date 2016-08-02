@@ -1,5 +1,22 @@
 #!/usr/bin/env python
 
+# Copyright (C) 2010 Red Hat, Inc., Vimal A.R <vimal@redhat.com>
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
 from __future__ import print_function
 import time
 import subprocess
@@ -85,7 +102,6 @@ class CephCheck(object):
             print("Check permissions, exiting!\n")
             sys.exit()
 
-
     def report_parse_summary(self, report):
         """Gets the MON/OSD node list for now
             Can add more parsers later
@@ -118,7 +134,6 @@ class CephCheck(object):
         """Get the list of MONs and OSDs from the report"""
         pass
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
-
 
     # 1. Cluster checks (MON, OSD, PG, Pool etc..)
 
