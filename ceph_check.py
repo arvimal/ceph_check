@@ -16,6 +16,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+# __author__ = "Vimal A.R"
+# __version__ = "v0.1"
+# __license__ = "GNU GPL v2.0"
+# __email__ = "vimal@redhat.com"
 
 from __future__ import print_function
 import time
@@ -27,25 +31,36 @@ import getpass
 import ConfigParser
 import logging
 
-__author__ = "Vimal A.R"
-__version__ = "v0.1"
-__license__ = "GNU GPL v2.0"
-__email__ = "vimal@redhat.com"
-
-CONFFILE = "/etc/ceph/ceph.conf"
+CONF_FILE = "/etc/ceph/ceph.conf"
 ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
+CEPH_CHECK_LOG = os.path.expanduser("~") + "/ceph_check.log"
+
+# LOGGING MODULE CONFIG ###
+# 1. Set the application name (override the default `root` user)
+cc_logger = logging.getLogger("ceph_check:")
+cc_logger.setLevel(logging.INFO)
+# 2. Set a Log handler
+handler = logging.FileHandler(CEPH_CHECK_LOG)
+# 3. Set up a log format
+log_format = logging.Formatter('%(asctime)s: %(name)s: %(levelname)s: %(message)s')
+# 4. Pass the log format to the log handler
+handler.setFormatter(log_format)
+# 5. Add the log handler to the logger object `cc_logger`
+cc_logger.addHandler(handler)
+# LOGGING MODULE CONFIG END ###
 
 
 class CephCheck(object):
     """The main ceph-check class"""
 
     def __init__(self, conffile, keyring):
-        self.conf = conffile
+        self.conffile = conffile
         self.keyring = keyring
         self.help()
 
     def notify(self):
-        print("## Running ceph_check\n")
+        cc_logger.info("Starting ceph_check")
+        print("## Starting ceph_check\n")
         self.keyring_check()
 
     def keyring_check(self):
@@ -53,16 +68,17 @@ class CephCheck(object):
         Check if a custom keyring exists
         """
         config_file = ConfigParser.SafeConfigParser()
-        config_file.read(self.conf)
-        print("## Checking keyring -\n")
+        cc_logger.info("Reading %s" % CONF_FILE)
+        config_file.read(self.conffile)
+        cc_logger.info("Checking keyring")
         try:
-            print("-Checking for a custom admin keyring.")
             keyring_custom = config_file.get('global', 'keyring')
-            print(self.keyring, "lists admin keyring at", keyring_custom)
+            cc_logger.info("Found %s" % self.keyring_custom)
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
-            print("-No custom keyring found")
-            print("-Falling back to", self.keyring)
+            cc_logger.info("No custom admin keyring specified in %s" % self.conffile)
+            cc_logger.info("Falling back to %s" % self.keyring)
+            cc_logger.info("Calling keyring_permission()")
             self.keyring_permission(self.keyring)
 
     def keyring_permission(self, keyring):
@@ -70,31 +86,35 @@ class CephCheck(object):
         Check the existence and permission of the keyring
         """
         if os.path.isfile(self.keyring):
+            cc_logger.info("%s exits" % self.keyring)
             if os.access(self.keyring, os.R_OK):
+                cc_logger.info("%s has read permissions" % self.keyring)
+                cc_logger.info("Calling ceph_report()")
                 self.ceph_report()
             else:
+                cc_logger.info("User %s does not have read permissions \
+                    for %s" % getpass.getuser, self.keyring)
                 print("\nERROR: User", getpass.getuser(),
                       "does not have read permissions for", self.keyring)
+                cc_logger.info("Exiting!")
                 print("\nExiting!\n")
-                sys.exit()
+                sys.exit(-1)
         else:
+            cc_logger.info("Cannot find keyring at %s" % keyring)
             print("\nCannot find keyring at", keyring)
+            cc_logger.info("Exiting!")
             print("\nExiting!\n")
             sys.exit()
 
     def ceph_report(self):
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
-        print("\n## Generating cluster report -\n")
+        cc_logger.info("Generating cluster report")
         try:
             with open(report, "w") as output:
-                subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
-                print("Saved to", report)
+                subprocess.call(["/usr/bin/ceph", "report"], stdout=output, )
+                cc_logger.info("Saved to %s" % report)
+                cc_logger.info("Calling report_parse_summary()")
                 self.report_parse_summary(report)
-        # Write an exception handler for a timeout error, example:
-        # $ ceph report
-        # 2016-07-14 20:06:53.996526 7efdc365b700  0 monclient(hunting): authenticate timed out after 300
-        # 2016-07-14 20:06:53.996559 7efdc365b700  0 librados: client.admin authentication error (110) Connection timed out
-        # Error connecting to cluster: TimedOut
 
         except IOError:
             # It's very unlikely we'll hit this and exit here.
@@ -146,7 +166,6 @@ class CephCheck(object):
                 print("Monitor rank : %s" % str(mon['rank']))
                 print("Host name    : %s" % str(mon['name']))
                 print("IP Address   : %s\n" % str(mon['addr']))
-                print("Port         : %s\n" % str(mon['addr']).strip([":"]))
 
     def osd_status_check(self, report):
         print("\n# OSD status: \n")
@@ -173,7 +192,6 @@ class CephCheck(object):
         print("-Best run from the Admin node, as the user assigned to run `ceph-deploy`.")
         print("-The user should have read permissions to the Admin keyring.\n")
 
-
 if __name__ == "__main__":
-    checker = CephCheck(CONFFILE, KEYRING)
+    checker = CephCheck(CONF_FILE, ADMIN_KEYRING)
     checker.notify()
