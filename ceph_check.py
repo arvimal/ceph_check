@@ -36,13 +36,14 @@ ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
 CEPH_CHECK_LOG = os.path.expanduser("~") + "/ceph_check.log"
 
 # LOGGING MODULE CONFIG ###
-# 1. Set the application name (override the default `root` user)
-cc_logger = logging.getLogger("ceph_check:")
+# 1. Set the application name (override the default `root` logger)
+cc_logger = logging.getLogger("ceph_check")
 cc_logger.setLevel(logging.INFO)
 # 2. Set a Log handler
 handler = logging.FileHandler(CEPH_CHECK_LOG)
 # 3. Set up a log format
-log_format = logging.Formatter('%(asctime)s: %(name)s: %(levelname)s: %(message)s')
+log_format = logging.Formatter(
+    '%(asctime)s: %(name)s: %(levelname)s: %(message)s')
 # 4. Pass the log format to the log handler
 handler.setFormatter(log_format)
 # 5. Add the log handler to the logger object `cc_logger`
@@ -59,6 +60,7 @@ class CephCheck(object):
         self.help()
 
     def notify(self):
+        cc_logger.info(" ")
         cc_logger.info("Starting ceph_check")
         print("## Starting ceph_check\n")
         self.keyring_check()
@@ -68,16 +70,19 @@ class CephCheck(object):
         Check if a custom keyring exists
         """
         config_file = ConfigParser.SafeConfigParser()
-        cc_logger.info("Reading %s" % CONF_FILE)
+        cc_logger.info("Reading '{0}'".format(CONF_FILE))
         config_file.read(self.conffile)
         cc_logger.info("Checking keyring")
         try:
             keyring_custom = config_file.get('global', 'keyring')
-            cc_logger.info("Found %s" % self.keyring_custom)
+            cc_logger.info(
+                "Found custom keyring at {0}".format(keyring_custom))
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
-            cc_logger.info("No custom admin keyring specified in %s" % self.conffile)
-            cc_logger.info("Falling back to %s" % self.keyring)
+            cc_logger.info(
+                "No custom admin keyring specified in %s" % self.conffile)
+            # cc_logger.info("Falling back to %s" % self.keyring)
+            cc_logger.info("Falling back to {0}".format(self.keyring))
             cc_logger.info("Calling keyring_permission()")
             self.keyring_permission(self.keyring)
 
@@ -86,22 +91,22 @@ class CephCheck(object):
         Check the existence and permission of the keyring
         """
         if os.path.isfile(self.keyring):
-            cc_logger.info("%s exits" % self.keyring)
+            cc_logger.info("{0} exists".format(self.keyring))
             if os.access(self.keyring, os.R_OK):
-                cc_logger.info("%s has read permissions" % self.keyring)
+                cc_logger.info("{0} has read permissions".format(self.keyring))
                 cc_logger.info("Calling ceph_report()")
                 self.ceph_report()
             else:
-                cc_logger.info("User %s does not have read permissions \
-                    for %s" % getpass.getuser, self.keyring)
-                print("\nERROR: User", getpass.getuser(),
-                      "does not have read permissions for", self.keyring)
+                cc_logger.info("User {0} does not have read permissions for {1}".format(
+                    getpass.getuser(), self.keyring))
+                print("User {0} does not have read permissions for {1}".format(
+                    getpass.getuser(), self.keyring))
                 cc_logger.info("Exiting!")
                 print("\nExiting!\n")
                 sys.exit(-1)
         else:
-            cc_logger.info("Cannot find keyring at %s" % keyring)
-            print("\nCannot find keyring at", keyring)
+            cc_logger.info("Cannot find keyring at {0}".format(keyring))
+            print("\nCannot find keyring at {0}".format(keyring))
             cc_logger.info("Exiting!")
             print("\nExiting!\n")
             sys.exit()
@@ -111,7 +116,7 @@ class CephCheck(object):
         cc_logger.info("Generating cluster report")
         try:
             with open(report, "w") as output:
-                subprocess.call(["/usr/bin/ceph", "report"], stdout=output, )
+                subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
                 cc_logger.info("Saved to %s" % report)
                 cc_logger.info("Calling report_parse_summary()")
                 self.report_parse_summary(report)
