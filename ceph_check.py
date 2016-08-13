@@ -24,9 +24,9 @@
 from __future__ import print_function
 import time
 import subprocess
+import json
 import sys
 import os
-import json
 import getpass
 import ConfigParser
 import logging
@@ -35,10 +35,10 @@ CONF_FILE = "/etc/ceph/ceph.conf"
 ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
 CEPH_CHECK_LOG = os.path.expanduser("~") + "/ceph_check.log"
 
-# LOGGING MODULE CONFIG ###
+# `logging` MODULE CONFIG ###
 # 1. Set the application name (override the default `root` logger)
 cc_logger = logging.getLogger("ceph_check")
-cc_logger.setLevel(logging.INFO)
+cc_logger.setLevel(logging.DEBUG)
 # 2. Set a Log handler
 handler = logging.FileHandler(CEPH_CHECK_LOG)
 # 3. Set up a log format
@@ -57,13 +57,32 @@ class CephCheck(object):
     def __init__(self, conffile, keyring):
         self.conffile = conffile
         self.keyring = keyring
-        self.help()
+        self.cc_condition()
 
-    def notify(self):
-        cc_logger.info(" ")
-        cc_logger.info("Starting ceph_check")
-        print("## Starting ceph_check\n")
-        self.keyring_check()
+    def cc_condition(self):
+        """
+        Conditions the user has to meet for
+        succesfull execution of ceph_check
+        """
+        cc_logger.info("##################START###################")
+        cc_logger.info("Printing the ideal conditions to the user!")
+        print("\nNOTE:\n")
+        print("`ceph_check` has the following three requirements:")
+        print(" * Ansible has to installed on this node.")
+        print(" * Passwordless SSH access to the cluster nodes")
+        print(" * Read access to the admin keyring on this node")
+        print("\nIf these conditions are not met, this program may error out!")
+        cc_logger.info("Requesting user's agreement on the conditions [Y/N]")
+        agreement = raw_input("\nCan we proceed? (Y/N) : ")
+        if agreement in ["Y", "y", "yes", "Yes"]:
+            cc_logger.info("User answered {0}".format(agreement))
+            cc_logger.info("Calling keyring_check()")
+            self.keyring_check()
+        else:
+            cc_logger.info("User answered {0}".format(agreement))
+            print("Please re-run the program after meeting the criteria!")
+            cc_logger.info("Exiting!")
+            sys.exit(-1)
 
     def keyring_check(self):
         """
@@ -120,28 +139,31 @@ class CephCheck(object):
                 cc_logger.info("Saved to %s" % report)
                 cc_logger.info("Calling report_parse_summary()")
                 self.report_parse_summary(report)
-
         except IOError:
             # It's very unlikely we'll hit this and exit here.
-            print("\nCannot create", report)
-            print("Check permissions, exiting!\n")
-            sys.exit()
+            print("Cannot write to /tmp, check permissions! Exiting!\n")
+            cc_logger("Cannot create {0}".format(report))
+            cc_logger.info("Exiting in ceph_report() - IOError")
+            sys.exit(-1)
 
     def report_parse_summary(self, report):
         """Gets the MON/OSD node list for now
             Can add more parsers later
         """
-        print("\n## Analysing the cluster report -")
         with open(report) as obj:
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
-            print("\n#Cluster status : ", cluster_status, "\n")
+            cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
+            print("REPORT")
+            print("------\n")
+            print("CLUSTER STATUS : {0}".format(cluster_status))
             # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
                 # Print a general cluster summary
                 # We iterate over each object within the "summary" dict,
                 # and print the 'value' for the 'summary' key
-                print("#Cluster summary:\n")
+                cc_logger.info("Cluster **not** HEALTHY!!")
+                print("Cluster summary:\n")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
         self.cluster_status(report)
@@ -192,11 +214,6 @@ class CephCheck(object):
         print("Get a dict of hostname and IP address of MONs and OSD nodes")
         pass
 
-    def help(self):
-        print("\n## Conditions for successfully executing this program:-\n")
-        print("-Best run from the Admin node, as the user assigned to run `ceph-deploy`.")
-        print("-The user should have read permissions to the Admin keyring.\n")
 
 if __name__ == "__main__":
     checker = CephCheck(CONF_FILE, ADMIN_KEYRING)
-    checker.notify()
