@@ -25,7 +25,7 @@ import os
 import json
 import getpass
 import ConfigParser
-
+import logging
 
 __author__ = "Vimal A.R"
 __version__ = "v0.1"
@@ -33,7 +33,7 @@ __license__ = "GNU GPL v2.0"
 __email__ = "vimal@redhat.com"
 
 CONFFILE = "/etc/ceph/ceph.conf"
-KEYRING = "/etc/ceph/ceph.client.admin.keyring"
+ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
 
 
 class CephCheck(object):
