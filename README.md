@@ -2,23 +2,23 @@
 
 ### Introduction
 
-** `ceph_check`, in short, is a reporting tool for RHCS/Ceph clusters.
+`ceph_check`, in short, is a reporting tool for RHCS/Ceph clusters.
 
-A distributed storage solution as Ceph has to be installed according to specific guide lines. 
+* A distributed storage solution as Ceph has to be installed according to specific guide lines. 
 
-This is important for optimal performance and ease of use. `ceph_check` intends to find unsupported or inoptimal configurations.
+* This is important for optimal performance and ease of use. `ceph_check` intends to find unsupported or inoptimal configurations.
 
-`ceph_check` is mainly intended towards RHCS installations, but can be equally applied on upstream Ceph installations as well.
+`* ceph_check` is mainly intended towards RHCS installations, but can be equally applied on upstream Ceph installations as well.
 
 ## Conditions:
 
-* `ceph_check` can be run from any node that fulfills the following points:
+`ceph_check` can be run from any node that fulfills the following points:
 
-	1. The node has to have `Ansible` installed.
+1. The node has to have `Ansible` installed.
 
-	2. The user executing the program has passwordless SSH access to the cluster nodes.
+2. The user executing the program has passwordless SSH access to the cluster nodes.
 
-	3. The user executing the program has at least `read access` to the Ceph Admin keyring.
+3. The user executing the program has at least `read access` to the Ceph Admin keyring.
 
 ## Features:
 
@@ -42,5 +42,5 @@ As a norm, any custom keyrings should be mentioned in /etc/ceph/ceph.conf for th
 
 9. Checks for discrepancies in the CRUSH map.
 
-10. <And several others in the pipeline>
+10. And several others in the pipeline..
 
