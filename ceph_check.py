@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2010 Red Hat, Inc., Vimal A.R <vimal@redhat.com>
+# Copyright (C) 2016 Red Hat, Inc., Vimal A.R <vimal@redhat.com>
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,13 +62,13 @@ class CephCheck(object):
     def cc_condition(self):
         """
         Conditions the user has to meet for
-        succesfull execution of ceph_check
+        a successfull execution of `ceph_check`
         """
         cc_logger.info("##################START###################")
         cc_logger.info("Printing the ideal conditions to the user!")
         print("\nNOTE:\n")
         print("`ceph_check` has the following three requirements:")
-        print(" * Ansible has to installed on this node.")
+        print(" * Ansible has to present on this node.")
         print(" * Passwordless SSH access to the cluster nodes")
         print(" * Read access to the admin keyring on this node")
         print("\nIf these conditions are not met, this program may error out!")
