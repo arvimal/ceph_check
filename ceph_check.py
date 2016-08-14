@@ -156,7 +156,7 @@ class CephCheck(object):
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
             print("\nceph_check REPORT:")
-            print("-\n" * 20)
+            print("-" * 18)
             print("CLUSTER STATUS : {0}".format(cluster_status))
             # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
@@ -164,9 +164,9 @@ class CephCheck(object):
                 # We iterate over each object within the "summary" dict,
                 # and print the 'value' for the 'summary' key
                 cc_logger.info("Cluster **not** HEALTHY!!")
-                print("Cluster summary:\n")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
+                    cc_logger.info(i['summary'])
         self.cluster_status(report)
 
     def cluster_status(self, report):
