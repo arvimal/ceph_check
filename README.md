@@ -8,7 +8,7 @@
 
 * This is important for optimal performance and ease of use. `ceph_check` intends to find unsupported or inoptimal configurations.
 
-`* ceph_check` is mainly intended towards RHCS installations, but can be equally applied on upstream Ceph installations as well.
+* `ceph_check` is mainly intended towards `Red Hat Ceph Storage` (RHCS) installations, but can be equally applied on upstream Ceph installations as well.
 
 ## Conditions:
 
@@ -22,9 +22,7 @@
 
 ## Features:
 
-1. ceph_check will detect custom keyring locations, and use it appropriately. 
-
-As a norm, any custom keyrings should be mentioned in /etc/ceph/ceph.conf for the Ceph cluster to work properly.
+1. `ceph_check` will detect custom keyring locations, and use it appropriately. As a norm, any custom keyrings should be mentioned in `/etc/ceph/ceph.conf` for the Ceph cluster to work properly.
 
 2. Checks the package versions on all the nodes in the Ceph cluster, and will report any descrepancies.
 
