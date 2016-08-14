@@ -156,26 +156,31 @@ class CephCheck(object):
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
             print("\nceph_check REPORT:")
-            print("-\n" * 20)
+            print("-" * 18)
             print("CLUSTER STATUS : {0}".format(cluster_status))
-            # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
-                # Print a general cluster summary
-                # We iterate over each object within the "summary" dict,
-                # and print the 'value' for the 'summary' key
+                # Print a general cluster summary, iterate over each object
+                # within the "summary" dict, and print the 'value' for the
+                # 'summary' key
                 cc_logger.info("Cluster **not** HEALTHY!!")
-                print("Cluster summary:\n")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
+                    cc_logger.info(i['summary'])
+        cc_logger.info("Calling cluster_status()")
         self.cluster_status(report)
 
     def cluster_status(self, report):
+        cc_logger.info("Starting to call helper functions")
         # Calling all helper functions irrespective of cluster status
+        cc_logger.info("Calling mon_status_check()")
         self.mon_status_check(report)
+        cc_logger.info("Calling osd_status_check()")
         self.osd_status_check(report)
+        cc_logger.info("Calling pool_info()")
         self.pool_info(report)
+        cc_logger.info("Calling pg_info()")
         self.pg_info(report)
-        # Calling the generic system config checks
+        cc_logger.info("Calling ssh_check()")
         self.ssh_check()
 
     def get_osd_and_mon(report):
@@ -207,12 +212,7 @@ class CephCheck(object):
     # 2. System config checks (SSH access, hardware, RAID etc.. )
     def ssh_check(self):
         """Check the ssh access to the MON/OSD nodes, and print
-            a) Hostname
-            b) IP address
-            c) ....
         """
-        print("Checking SSH passwordless access to the Cluster nodes")
-        print("Get a dict of hostname and IP address of MONs and OSD nodes")
         pass
 
 
