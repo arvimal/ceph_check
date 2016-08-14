@@ -135,7 +135,8 @@ class CephCheck(object):
         cc_logger.info("Generating cluster report")
         try:
             with open(report, "w") as output:
-                subprocess.call(["/usr/bin/ceph", "report"], stdout=output)
+                subprocess.call(["/usr/bin/ceph", "report"],
+                                stdout=output, stderr=subprocess.PIPE)
                 cc_logger.info("Saved to %s" % report)
                 cc_logger.info("Calling report_parse_summary()")
                 self.report_parse_summary(report)
@@ -154,8 +155,8 @@ class CephCheck(object):
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("REPORT")
-            print("------\n")
+            print("\nceph_check REPORT:")
+            print("-\n" * 20)
             print("CLUSTER STATUS : {0}".format(cluster_status))
             # Get this printed in RED color :)
             if cluster_status != "HEALTH_OK":
