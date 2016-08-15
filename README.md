@@ -40,5 +40,5 @@
 
 9. Checks for discrepancies in the CRUSH map.
 
-10. And several others in the pipeline..
+10. `ceph_check` logs to /var/log/messages via `rsyslog`.
 
