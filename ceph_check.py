@@ -30,20 +30,19 @@ import os
 import getpass
 import ConfigParser
 import logging
+import logging.handlers
 
 CONF_FILE = "/etc/ceph/ceph.conf"
 ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
-CEPH_CHECK_LOG = os.path.expanduser("~") + "/ceph_check.log"
 
-# `logging` MODULE CONFIG ###
+# `logging` MODULE CONFIG to use rsyslog ###
 # 1. Set the application name (override the default `root` logger)
 cc_logger = logging.getLogger("ceph_check")
 cc_logger.setLevel(logging.DEBUG)
-# 2. Set a Log handler
-handler = logging.FileHandler(CEPH_CHECK_LOG)
+# 2. Set a Log handler to log to /var/log/messages
+handler = logging.handlers.SysLogHandler(address='/dev/log')
 # 3. Set up a log format
-log_format = logging.Formatter(
-    '%(asctime)s: %(name)s: %(levelname)s: %(message)s')
+log_format = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
 # 4. Pass the log format to the log handler
 handler.setFormatter(log_format)
 # 5. Add the log handler to the logger object `cc_logger`
