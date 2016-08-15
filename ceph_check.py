@@ -166,7 +166,10 @@ class CephCheck(object):
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
                     cc_logger.info(i['summary'])
+<<<<<<< HEAD
         cc_logger.info("Calling cluster_status()")
+=======
+>>>>>>> 894e6a9c6e26c5a58163d6b35824eb3326c50062
         self.cluster_status(report)
 
     def cluster_status(self, report):
