@@ -56,7 +56,6 @@ class CephCheck(object):
     def __init__(self, conffile, keyring):
         self.conffile = conffile
         self.keyring = keyring
-        self.cc_condition()
 
     def cc_condition(self):
         """
@@ -217,3 +216,10 @@ class CephCheck(object):
 
 if __name__ == "__main__":
     checker = CephCheck(CONF_FILE, ADMIN_KEYRING)
+    try:
+        checker.cc_condition()
+    except Exception, err:
+        cc_logger.exception(err)
+        print("ERROR - {0}".format(err))
+        print("Hit exception, check /var/log/messages for more info")
+        sys.exit(-1)
