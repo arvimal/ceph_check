@@ -20,6 +20,56 @@
 
 3. The user executing the program has at least `read access` to the Ceph Admin keyring.
 
+## NOTE:
+
+`ceph_check()` needs Python v3. 
+
+* RHEL7 and variants do not have v3 installed by default. Hence, you may want to install the package `python34` which ships Python v3.
+
+~~~
+# yum info python33
+Loaded plugins: product-id, rhnplugin, search-disabled-repos, subscription-manager
+Installed Packages
+Name        : python33
+Arch        : x86_64
+Version     : 1.1
+Release     : 13.el7
+Size        : 0.0  
+Repo        : installed
+From repo   : rhel-x86_64-server-7-rhscl-1
+Summary     : Package that installs python33
+License     : GPLv2+
+Description : This is the main package for python33 Software Collection.
+
+
+# yum install -y python33-python
+~~~
+
+* Since python2.7 is the default version in RHEL7, `python33` will get installed to a custom path at `/opt/rh/python33`.
+
+* To read the python3 shared libraries, set the PATH, LD_LIBRARY_PATH, and MANPATH variables.
+
+~~~
+# export PATH=/opt/rh/python33/root/usr/bin${PATH:+:${PATH}}
+# export LD_LIBRARY_PATH=/opt/rh/python33/root/usr/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+# export MANPATH=/opt/rh/python33/root/usr/share/man:${MANPATH}
+~~~
+
+* After the environment variables are set, check for python3 versions. 
+
+~~~
+$ python<TAB>
+python             python3            python3.3m         python-config
+python2            python3.3          python3.3m-config  
+python2.7          python3.3-config   python3-config     
+~~~
+
+* Execute `ceph_check` with `python3.3`.
+
+~~~
+$ python3 ceph_check.py
+~~~
+
 ## Features:
 
 1. `ceph_check` will detect custom keyring locations, and use it appropriately. As a norm, any custom keyrings should be mentioned in `/etc/ceph/ceph.conf` for the Ceph cluster to work properly.
