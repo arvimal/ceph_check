@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from __future__ import print_function
 import time
@@ -45,7 +45,6 @@ class CephCheck(object):
         """
         cc_logger.info("#" * 20)
         cc_logger.info("Starting ceph_check")
-        print("`ceph_check` starting :-\n")
         cc_logger.info("Calling check_ansible()")
         self.check_ansible()
         cc_logger.info("Calling check_keyring()")
@@ -70,11 +69,11 @@ class CephCheck(object):
         cc_logger.info("Reading '{0}'".format(CONF_FILE))
         config_file.read(self.conffile)
         cc_logger.info(
-            "Checking for any custom keyrings in {0}".format(CONF_FILE))
+            "Checking custom admin keyrings in {0}".format(CONF_FILE))
         try:
             keyring_custom = config_file.get('global', 'keyring')
             cc_logger.info(
-                "Found custom keyring at {0}".format(keyring_custom))
+                "Found custom admin keyring at {0}".format(keyring_custom))
             self.keyring_permission(keyring_custom)
         except ConfigParser.NoOptionError:
             cc_logger.info(
@@ -118,25 +117,37 @@ class CephCheck(object):
             sys.exit(-1)
 
     def ceph_report(self):
-        """[summary]
-
-        [description]
         """
+        Contacts the monitor specified in CONF_FILE
+
+        Tries to generate a `ceph report`.
+        """
+        import pdb
+        pdb.set_trace()
+        interval = [20, 15, 10, 5]
+        tries = 3
+        cc_logger.info("Trying to generate a cluster report")
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
-        cc_logger.info("Generating cluster report")
-        try:
-            with open(report, "w") as output:
-                subprocess.call(["/usr/bin/ceph", "report"],
-                                stdout=output, stderr=subprocess.PIPE)
-                cc_logger.info("Saved to %s" % report)
-                cc_logger.info("Calling report_parse_summary()")
-                self.report_parse_summary(report)
-        except IOError:
-            # It's very unlikely we'll hit this and exit here.
-            print("Cannot write to /tmp, check permissions! Exiting!\n")
-            cc_logger("Cannot create {0}".format(report))
-            cc_logger.info("Exiting in ceph_report() - IOError")
-            sys.exit(-1)
+        with open(report, "w") as output:
+            proc = subprocess.Popen(
+                ["/usr/bin/ceph", "report"], stdout=output, stderr=subprocess.PIPE)
+            while tries:
+                try:
+                    out, errs = proc.communicate(timeout=interval[-1])
+                except:
+                    cc_logger.info(
+                        "Connection timed out, monitor host not reachable")
+                    print("\nConnection timed out, monitor host not reachable")
+                    tries -= 1
+                    sleep_seconds = interval.pop()
+                    cc_logger.info(
+                        "Retrying to connect after {0} seconds.".format(sleep_seconds))
+                    print("Retrying to connect after {0} seconds".format(sleep_seconds))
+                    time.sleep(sleep_seconds)
+            cc_logger.info(
+                "Failing permanently. Not able to connect with the monitor")
+            cc_logger.info("Check the status of your monitor")
+            print("\nFailing, not able to connect to the monitor!")
 
     def report_parse_summary(self, report):
         """
@@ -175,7 +186,7 @@ class CephCheck(object):
         Arguments:
             report {[type]} -- [description]
         """
-        cc_logger.info("Starting to call helper functions")
+        cc_logger.info("Calling helper functions")
         # Calling all helper functions irrespective of cluster status
         cc_logger.info("Calling mon_status_check()")
         self.mon_status_check(report)
@@ -196,7 +207,7 @@ class CephCheck(object):
     # 1. Cluster checks (MON, OSD, PG, Pool etc..)
 
     def mon_status_check(self, report):
-        print("\n# MON status: \n")
+        print("\nMonitor status: \n")
         with open(report) as obj:
             json_obj = json.load(obj)
             print("Mon map epoch: %s\n" % str(json_obj['monmap']['epoch']))
