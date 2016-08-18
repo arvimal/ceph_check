@@ -38,37 +38,36 @@ class CephCheck(object):
 
     def cc_condition(self):
         """
-        Conditions the user has to meet for
-        a successfull execution of `ceph_check`
+        Conditions for a successfull execution of `ceph_check`
+        1. Ansible installed.
+        2. Read-only access to the admin keyring.
+        2. Passwordless SSH to the cluster nodes.
         """
-        cc_logger.info("##################START###################")
-        cc_logger.info("Printing the ideal conditions to the user!")
-        print("\nNOTE:\n")
-        print("`ceph_check` has the following three requirements:")
-        print(" * Ansible has to present on this node.")
-        print(" * Passwordless SSH access to the cluster nodes")
-        print(" * Read access to the admin keyring on this node")
-        print("\nIf these conditions are not met, this program may error out!")
-        cc_logger.info("Requesting user's agreement on the conditions [Y/N]")
-        agreement = raw_input("\nCan we proceed? (Y/N) : ")
-        if agreement in ["Y", "y", "yes", "Yes"]:
-            cc_logger.info("User answered {0}".format(agreement))
-            cc_logger.info("Calling keyring_check()")
-            self.keyring_check()
-        else:
-            cc_logger.info("User answered {0}".format(agreement))
-            print("Please re-run the program after meeting the criteria!")
-            cc_logger.info("Exiting!")
+        cc_logger.info("Calling check_ansible()")
+        self.check_ansible()
+        cc_logger.info("Calling check_keyring()")
+        self.check_keyring()
+
+    def check_ansible(self):
+        try:
+            cc_logger.info("Trying to load the ansible module")
+            import ansible
+            cc_logger.info("`ansible` module loaded, package installed.")
+        except ImportError as err:
+            cc_logger.exception(err)
+            print("Exception - {0}".format(err))
+            print("\nAnsible not installed. Install and re-run `ceph_check`.")
             sys.exit(-1)
 
-    def keyring_check(self):
+    def check_keyring(self):
         """
         Check if a custom keyring exists
         """
         config_file = ConfigParser.SafeConfigParser()
         cc_logger.info("Reading '{0}'".format(CONF_FILE))
         config_file.read(self.conffile)
-        cc_logger.info("Checking keyring")
+        cc_logger.info(
+            "Checking for any custom keyrings in {0}".format(CONF_FILE))
         try:
             keyring_custom = config_file.get('global', 'keyring')
             cc_logger.info(
@@ -93,8 +92,8 @@ class CephCheck(object):
                 cc_logger.info("Calling ceph_report()")
                 self.ceph_report()
             else:
-                cc_logger.info("User {0} does not have read permissions for {1}".format(
-                    getpass.getuser(), self.keyring))
+                cc_logger.info("User {0} does not have read permissions\
+                               for {1}".format(getpass.getuser(), self.keyring))
                 print("User {0} does not have read permissions for {1}".format(
                     getpass.getuser(), self.keyring))
                 cc_logger.info("Exiting!")
@@ -108,6 +107,10 @@ class CephCheck(object):
             sys.exit()
 
     def ceph_report(self):
+        """[summary]
+
+        [description]
+        """
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
         cc_logger.info("Generating cluster report")
         try:
@@ -125,8 +128,9 @@ class CephCheck(object):
             sys.exit(-1)
 
     def report_parse_summary(self, report):
-        """Gets the MON/OSD node list for now
-            Can add more parsers later
+        """
+        Parse the ceph report and get cluster status
+
         """
         with open(report) as obj:
             json_obj = json.load(obj)
@@ -146,7 +150,22 @@ class CephCheck(object):
         cc_logger.info("Calling cluster_status()")
         self.cluster_status(report)
 
+    def check_passwordless_ssh(self):
+        """
+        This is one of the three primary conditions for `ceph_check`.
+
+        Check passwordless SSH access to the MON and OSD nodes
+        """
+        pass
+
     def cluster_status(self, report):
+        """[summary]
+
+        [description]
+
+        Arguments:
+            report {[type]} -- [description]
+        """
         cc_logger.info("Starting to call helper functions")
         # Calling all helper functions irrespective of cluster status
         cc_logger.info("Calling mon_status_check()")
@@ -186,12 +205,6 @@ class CephCheck(object):
     def pg_info(self, report):
         print("\n# Placement Group status: \n")
 
-    # 2. System config checks (SSH access, hardware, RAID etc.. )
-    def ssh_check(self):
-        """Check the ssh access to the MON/OSD nodes, and print
-        """
-        pass
-
 
 if __name__ == "__main__":
     checker = CephCheck(CONF_FILE, ADMIN_KEYRING)
@@ -199,6 +212,6 @@ if __name__ == "__main__":
         checker.cc_condition()
     except Exception, err:
         cc_logger.exception(err)
-        print("ERROR - {0}".format(err))
-        print("Hit exception, check /var/log/messages for more info")
+        print("Exception - {0}".format(err))
+        print("Hit Exception, check /var/log/messages for more info")
         sys.exit(-1)
