@@ -43,6 +43,9 @@ class CephCheck(object):
         2. Read-only access to the admin keyring.
         2. Passwordless SSH to the cluster nodes.
         """
+        cc_logger.info("#" * 20)
+        cc_logger.info("Starting ceph_check")
+        print("`ceph_check` starting :-\n")
         cc_logger.info("Calling check_ansible()")
         self.check_ansible()
         cc_logger.info("Calling check_keyring()")
@@ -77,34 +80,42 @@ class CephCheck(object):
             cc_logger.info(
                 "No custom admin keyring specified in %s" % self.conffile)
             # cc_logger.info("Falling back to %s" % self.keyring)
-            cc_logger.info("Falling back to {0}".format(self.keyring))
-            cc_logger.info("Calling keyring_permission()")
-            self.keyring_permission(self.keyring)
+            cc_logger.info("Trying {0}".format(self.keyring))
+            if os.path.isfile(self.keyring):
+                cc_logger.info("{0} exists".format(self.keyring))
+                cc_logger.info("Calling keyring_permission()")
+                self.keyring_permission(self.keyring)
+            else:
+                cc_logger.info(
+                    "Cannot find admin keyring at {0}".format(self.keyring))
+                print("Cannot find admin keyring at {0}".format(
+                    self.keyring))
+                print("\nThis is ideally hit when:\n")
+                print("a. The admin keyring {0} is missing.".format(
+                    self.keyring))
+                print("b. A custom keyring exists but is not mentioned in {0}".format(
+                    CONF_FILE))
+                print("\nFix the problem and re-run!")
+                cc_logger.info("Exiting!")
+                print("\nExiting!\n")
+                sys.exit()
 
     def keyring_permission(self, keyring):
         """
         Check the existence and permission of the keyring
         """
-        if os.path.isfile(self.keyring):
-            cc_logger.info("{0} exists".format(self.keyring))
-            if os.access(self.keyring, os.R_OK):
-                cc_logger.info("{0} has read permissions".format(self.keyring))
-                cc_logger.info("Calling ceph_report()")
-                self.ceph_report()
-            else:
-                cc_logger.info("User {0} does not have read permissions\
-                               for {1}".format(getpass.getuser(), self.keyring))
-                print("User {0} does not have read permissions for {1}".format(
-                    getpass.getuser(), self.keyring))
-                cc_logger.info("Exiting!")
-                print("\nExiting!\n")
-                sys.exit(-1)
+        if os.access(self.keyring, os.R_OK):
+            cc_logger.info("{0} has read permissions".format(self.keyring))
+            cc_logger.info("Calling ceph_report()")
+            self.ceph_report()
         else:
-            cc_logger.info("Cannot find keyring at {0}".format(keyring))
-            print("\nCannot find keyring at {0}".format(keyring))
+            cc_logger.info("User {0} does not have read permissions\
+                           for {1}".format(getpass.getuser(), self.keyring))
+            print("User {0} does not have read permissions for {1}".format(
+                getpass.getuser(), self.keyring))
             cc_logger.info("Exiting!")
             print("\nExiting!\n")
-            sys.exit()
+            sys.exit(-1)
 
     def ceph_report(self):
         """[summary]
@@ -136,8 +147,6 @@ class CephCheck(object):
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("\nceph_check REPORT:")
-            print("-" * 18)
             print("CLUSTER STATUS : {0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
                 # Print a general cluster summary, iterate over each object
@@ -177,7 +186,7 @@ class CephCheck(object):
         cc_logger.info("Calling pg_info()")
         self.pg_info(report)
         cc_logger.info("Calling ssh_check()")
-        self.ssh_check()
+        self.check_passwordless_ssh()
 
     def get_osd_and_mon(report):
         """Get the list of MONs and OSDs from the report"""
