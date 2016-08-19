@@ -22,52 +22,20 @@
 
 ## NOTE:
 
-`ceph_check()` needs Python v3. 
+`ceph_check` needs a few features of the `subprocess` module shipped in Python v3. But since `ceph_check` also targets OS versions running Python v2, we will need to use the module `subprocess32` which contains the much needed features backported to v2.
 
-* RHEL7 and variants do not have v3 installed by default. Hence, you may want to install the package `python34` which ships Python v3.
+Refer [https://github.com/google/python-subprocess32](https://github.com/google/python-subprocess32)
 
-~~~
-# yum info python33
-Loaded plugins: product-id, rhnplugin, search-disabled-repos, subscription-manager
-Installed Packages
-Name        : python33
-Arch        : x86_64
-Version     : 1.1
-Release     : 13.el7
-Size        : 0.0  
-Repo        : installed
-From repo   : rhel-x86_64-server-7-rhscl-1
-Summary     : Package that installs python33
-License     : GPLv2+
-Description : This is the main package for python33 Software Collection.
-
-
-# yum install -y python33-python
-~~~
-
-* Since python2.7 is the default version in RHEL7, `python33` will get installed to a custom path at `/opt/rh/python33`.
-
-* To read the python3 shared libraries, set the PATH, LD_LIBRARY_PATH, and MANPATH variables.
+* You'll need to install `gcc` and `python-devel`, before installing `subprocess32`.
 
 ~~~
-# export PATH=/opt/rh/python33/root/usr/bin${PATH:+:${PATH}}
-# export LD_LIBRARY_PATH=/opt/rh/python33/root/usr/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
-# export MANPATH=/opt/rh/python33/root/usr/share/man:${MANPATH}
+# yum install gcc python-devel -y
 ~~~
 
-* After the environment variables are set, check for python3 versions. 
+* `subprocess32` can be installed using `pip`
 
 ~~~
-$ python<TAB>
-python             python3            python3.3m         python-config
-python2            python3.3          python3.3m-config  
-python2.7          python3.3-config   python3-config     
-~~~
-
-* Execute `ceph_check` with `python3.3`.
-
-~~~
-$ python3 ceph_check.py
+# sudo pip install subprocess32
 ~~~
 
 ## Features:
