@@ -60,3 +60,5 @@ Refer [https://github.com/google/python-subprocess32](https://github.com/google/
 
 10. `ceph_check` logs to /var/log/messages via `rsyslog`.
 
+11. If the leader MON is not available, `ceph_check` will try to contact it three times each with an interval of 5, 10, and 15 seconds. If not able to contact within the said time period, it'll bail out.
+
