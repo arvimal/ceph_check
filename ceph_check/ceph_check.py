@@ -2,15 +2,35 @@
 
 from __future__ import print_function
 import time
-import subprocess
-import json
-import sys
 import os
+import sys
+import json
 import getpass
 import ConfigParser
 import logging
 import logging.handlers
 
+# We need the `timeout` feature in python3 subprocess module.
+# This will need a `pip install subprocess32`.
+try:
+    import subprocess32
+except ImportError:
+    print("`ceph_check` requires `subprocess32` to function properly")
+    print("`subprocess32` module required! Exiting.")
+    sys.exit(-1)
+"""
+try:
+    if os.name == 'posix' and sys.version_info[0] < 3:
+        import subprocess32 as subprocess
+    else:
+        import subprocess
+except ImportError:
+    print("\n`ceph_check` requires `subprocess32` to function properly.\n")
+    print("If you're on Python v2, use `pip` to install `subprocess32`.\n")
+    print("# pip install subprocess32\n")
+    print("Exiting!\n")
+    sys.exit(-1)
+"""
 CONF_FILE = "/etc/ceph/ceph.conf"
 ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
 
@@ -92,8 +112,8 @@ class CephCheck(object):
                 print("\nThis is ideally hit when:\n")
                 print("a. The admin keyring {0} is missing.".format(
                     self.keyring))
-                print("b. A custom keyring exists but is not mentioned in {0}".format(
-                    CONF_FILE))
+                print(
+                    "b. A custom keyring exists but is not mentioned in {0}".format(CONF_FILE))
                 print("\nFix the problem and re-run!")
                 cc_logger.info("Exiting!")
                 print("\nExiting!\n")
@@ -108,8 +128,8 @@ class CephCheck(object):
             cc_logger.info("Calling ceph_report()")
             self.ceph_report()
         else:
-            cc_logger.info("User {0} does not have read permissions\
-                           for {1}".format(getpass.getuser(), self.keyring))
+            cc_logger.info("User {0} does not have read permissions for {1}".format(
+                getpass.getuser(), self.keyring))
             print("User {0} does not have read permissions for {1}".format(
                 getpass.getuser(), self.keyring))
             cc_logger.info("Exiting!")
@@ -118,47 +138,61 @@ class CephCheck(object):
 
     def ceph_report(self):
         """
-        Contacts the monitor specified in CONF_FILE
-
         Tries to generate a `ceph report`.
         """
-        import pdb
-        pdb.set_trace()
-        interval = [20, 15, 10, 5]
+        interval = [15, 10, 5]
         tries = 3
-        cc_logger.info("Trying to generate a cluster report")
         report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
+        cc_logger.info("Trying to generate a cluster report")
+        # import pdb
+        # pdb.set_trace()
         with open(report, "w") as output:
-            proc = subprocess.Popen(
-                ["/usr/bin/ceph", "report"], stdout=output, stderr=subprocess.PIPE)
+            proc = subprocess32.Popen(
+                ["/usr/bin/ceph", "report"], stdout=output, stderr=subprocess32.PIPE)
             while tries:
                 try:
-                    out, errs = proc.communicate(timeout=interval[-1])
-                except:
+                    # out/err will only be populated if `communicate` succeeds
+                    # If success, `out` will contain nothing since `stdout=output,
+                    # and `err` will contain `report <report-number>`
+                    # If failed to communicate, `err` will contain the following logs:
+                    # ~~~
+                    # 7f3c38155700  0 monclient(hunting): authenticate timed out after 300
+                    # 7f3c38155700  0 librados: client.admin authentication error (110)
+                    # Connection timed out
+                    # Error connecting to cluster: TimedOut
+
+                    out, err = proc.communicate(timeout=interval[-1])
+                    if "report" in err:
+                        self.report_parse_summary(report)
+                        # The control flow returns back here from the helper functions 
+                        # under `cluster_status()` and prints the final failure 
+                        # statements to stdout and rsyslog. Until another proper 
+                        # way can be found, `sys.exit()` is needed.
+                        sys.exit()
+                except (subprocess32.TimeoutExpired):
                     cc_logger.info(
-                        "Connection timed out, monitor host not reachable")
-                    print("\nConnection timed out, monitor host not reachable")
+                        "Connection timed out, monitor host not reachable!")
+                    print("\nConnection timed out, monitor host not reachable!")
                     tries -= 1
                     sleep_seconds = interval.pop()
-                    cc_logger.info(
-                        "Retrying to connect after {0} seconds.".format(sleep_seconds))
-                    print("Retrying to connect after {0} seconds".format(sleep_seconds))
+                    cc_logger.info("Will retry after {0} seconds.".format(sleep_seconds))
+                    print("Will retry after {0} seconds".format(sleep_seconds))
                     time.sleep(sleep_seconds)
+
             cc_logger.info(
                 "Failing permanently. Not able to connect with the monitor")
-            cc_logger.info("Check the status of your monitor")
+            cc_logger.info("Check the monitor status!")
             print("\nFailing, not able to connect to the monitor!")
 
     def report_parse_summary(self, report):
         """
         Parse the ceph report and get cluster status
-
         """
         with open(report) as obj:
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("CLUSTER STATUS : {0}".format(cluster_status))
+            print("\nCLUSTER STATUS : {0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
                 # Print a general cluster summary, iterate over each object
                 # within the "summary" dict, and print the 'value' for the
@@ -179,12 +213,8 @@ class CephCheck(object):
         pass
 
     def cluster_status(self, report):
-        """[summary]
-
-        [description]
-
-        Arguments:
-            report {[type]} -- [description]
+        """
+        Parse the report for further checks
         """
         cc_logger.info("Calling helper functions")
         # Calling all helper functions irrespective of cluster status
@@ -231,7 +261,8 @@ if __name__ == "__main__":
     try:
         checker.cc_condition()
     except Exception, err:
+        cc_logger.info("<--BUG--><--Cut here-->")
         cc_logger.exception(err)
-        print("Exception - {0}".format(err))
-        print("Hit Exception, check /var/log/messages for more info")
+        print("Exception : {0}".format(err))
+        print("Hit Exception. Check /var/log/messages for more detail.")
         sys.exit(-1)
