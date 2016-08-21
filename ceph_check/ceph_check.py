@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 import time
@@ -39,9 +40,11 @@ ADMIN_KEYRING = "/etc/ceph/ceph.client.admin.keyring"
 cc_logger = logging.getLogger("ceph_check")
 cc_logger.setLevel(logging.DEBUG)
 # 2. Set a Log handler to log to /var/log/messages
+# NOTE: rsyslog won't handle multiline properly (exceptions here)
+# Add `$EscapeControlCharactersOnReceive off` in /etc/rsyslog.conf to fix
 handler = logging.handlers.SysLogHandler(address='/dev/log')
 # 3. Set up a log format
-log_format = logging.Formatter('%(name)s: %(levelname)s: %(message)s')
+log_format = logging.Formatter('%(name)s: %(levelname)-2s: %(message)s')
 # 4. Pass the log format to the log handler
 handler.setFormatter(log_format)
 # 5. Add the log handler to the logger object `cc_logger`
@@ -151,15 +154,17 @@ class CephCheck(object):
                 ["/usr/bin/ceph", "report"], stdout=output, stderr=subprocess32.PIPE)
             while tries:
                 try:
-                    # out/err will only be populated if `communicate` succeeds
-                    # If success, `out` will contain nothing since `stdout=output,
-                    # and `err` will contain `report <report-number>`
-                    # If failed to communicate, `err` will contain the following logs:
-                    # ~~~
-                    # 7f3c38155700  0 monclient(hunting): authenticate timed out after 300
-                    # 7f3c38155700  0 librados: client.admin authentication error (110)
-                    # Connection timed out
-                    # Error connecting to cluster: TimedOut
+                # out/err will only be populated if `communicate` succeeds.
+                # If success, `out` will contain nothing since:
+                    # stdout=output
+                    # `err` = `report <report-number>`
+                # If failed to communicate, `err` will contain :
+                # ~~~
+                # 7f3c38155700  0 monclient(hunting): authenticate timed out after 300
+                # 7f3c38155700  0 librados: client.admin authentication error (110)
+                # Connection timed out
+                # Error connecting to cluster: TimedOut
+                # ~~~
 
                     out, err = proc.communicate(timeout=interval[-1])
                     if "report" in err:
@@ -234,8 +239,6 @@ class CephCheck(object):
         pass
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
-    # 1. Cluster checks (MON, OSD, PG, Pool etc..)
-
     def mon_status_check(self, report):
         print("\nMonitor status: \n")
         with open(report) as obj:
@@ -262,7 +265,7 @@ if __name__ == "__main__":
         checker.cc_condition()
     except Exception, err:
         cc_logger.info("<--BUG--><--Cut here-->")
-        cc_logger.exception(err)
+        cc_logger.exception(err, exc_info=True)
         print("Exception : {0}".format(err))
         print("Hit Exception. Check /var/log/messages for more detail.")
         sys.exit(-1)
