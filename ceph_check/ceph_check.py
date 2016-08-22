@@ -256,17 +256,16 @@ class CephCheck(object):
                 print("Host name        : {0}".format(str(mon['name'])))
                 print("IP Address       : {0}".format(str(mon['addr']).split(":")[0]))
                 print("Role             : {0}".format("Leader / Peon"))
-                print("Port             : {0}".format(str(mon['addr']).split(":")[1].split("/")[0]))
-                print("")
+                print("Port             : {0}\n".format(str(mon['addr']).split(":")[1].split("/")[0]))
 
     def osd_status_check(self, report):
-        print("\n# OSD status: \n")
+        print("\n# OSD STATUS: \n")
 
     def pool_info(self, report):
-        print("\n# Pool status: \n")
+        print("\n# PPOOL STATUS: \n")
 
     def pg_info(self, report):
-        print("\n# Placement Group status: \n")
+        print("\n# PG STATUS : \n")
 
 
 if __name__ == "__main__":
