@@ -10,6 +10,7 @@ import getpass
 import ConfigParser
 import logging
 import logging.handlers
+import tempfile
 
 # We need the `timeout` feature in python3 subprocess module.
 # This will need a `pip install subprocess32`.
@@ -145,8 +146,9 @@ class CephCheck(object):
         """
         interval = [15, 10, 5]
         tries = 3
-        report = "/tmp/report-" + time.strftime("%d%m%Y-%H%M%S")
-        cc_logger.info("Trying to generate a cluster report")
+        temp_folder = tempfile.mkdtemp()
+        report = temp_folder + "/" + "report-" + time.strftime("%d%m%Y-%H%M%S")
+        cc_logger.info("Creating cluster report at {}".format(report))
         # import pdb
         # pdb.set_trace()
         with open(report, "w") as output:
@@ -167,7 +169,6 @@ class CephCheck(object):
                     # Connection timed out
                     # Error connecting to cluster: TimedOut
                     # ~~~
-
                     out, err = proc.communicate(timeout=interval[-1])
                     if "report" in err:
                         self.report_parse_summary(report)
@@ -200,7 +201,7 @@ class CephCheck(object):
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("\nCLUSTER STATUS : {0}".format(cluster_status))
+            print("\nCLUSTER STATUS  : {0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
                 cc_logger.info("Cluster **NOT** HEALTHY!!")
                 print("\nSUMMARY\n")
@@ -243,6 +244,7 @@ class CephCheck(object):
 
     def get_osd_and_mon(report):
         """Get the list of MONs and OSDs from the report"""
+
         pass
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
