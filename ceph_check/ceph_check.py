@@ -150,29 +150,31 @@ class CephCheck(object):
         # import pdb
         # pdb.set_trace()
         with open(report, "w") as output:
-            proc = subprocess32.Popen(
-                ["/usr/bin/ceph", "report"], stdout=output, stderr=subprocess32.PIPE)
+            proc = subprocess32.Popen(["/usr/bin/ceph", "report"],
+                                      stdout=output, stderr=subprocess32.PIPE)
             while tries:
                 try:
-                # out/err will only be populated if `communicate` succeeds.
-                # If success, `out` will contain nothing since:
-                    # stdout=output
-                    # `err` = `report <report-number>`
-                # If failed to communicate, `err` will contain :
-                # ~~~
-                # 7f3c38155700  0 monclient(hunting): authenticate timed out after 300
-                # 7f3c38155700  0 librados: client.admin authentication error (110)
-                # Connection timed out
-                # Error connecting to cluster: TimedOut
-                # ~~~
+                    # out/err gets populated if `communicate` succeeds
+                    # If success, `out` won't contain anything,
+                    # since `stdout` == report file
+                    # and `err` = `report <report-number>`
+                    # In case of failure, `err` will contain :
+                    # ~~~
+                    # 7f3c38155700  0 monclient(hunting): authenticate timed
+                    # out after 300
+                    # 7f3c38155700  0 librados: client.admin authentication
+                    # error (110)
+                    # Connection timed out
+                    # Error connecting to cluster: TimedOut
+                    # ~~~
 
                     out, err = proc.communicate(timeout=interval[-1])
                     if "report" in err:
                         self.report_parse_summary(report)
-                        # The control flow returns back here from the helper functions 
-                        # under `cluster_status()` and prints the final failure 
-                        # statements to stdout and rsyslog. Until another proper 
-                        # way can be found, `sys.exit()` is needed.
+                        # `report_parse_summary()` calls the helper funcs.
+                        # Once finished, the control returns back here.
+                        # It will un-necessarily logs failures.
+                        # Hence calling `sys.exit()
                         sys.exit()
                 except (subprocess32.TimeoutExpired):
                     cc_logger.info(
@@ -180,7 +182,8 @@ class CephCheck(object):
                     print("\nConnection timed out, monitor host not reachable!")
                     tries -= 1
                     sleep_seconds = interval.pop()
-                    cc_logger.info("Will retry after {0} seconds.".format(sleep_seconds))
+                    cc_logger.info(
+                        "Will retry after {0} seconds.".format(sleep_seconds))
                     print("Will retry after {0} seconds".format(sleep_seconds))
                     time.sleep(sleep_seconds)
 
@@ -199,15 +202,19 @@ class CephCheck(object):
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
             print("\nCLUSTER STATUS : {0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
-                # Print a general cluster summary, iterate over each object
-                # within the "summary" dict, and print the 'value' for the
-                # 'summary' key
-                cc_logger.info("Cluster **not** HEALTHY!!")
+                cc_logger.info("Cluster **NOT** HEALTHY!!")
+                print("\nSUMMARY\n")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
                     cc_logger.info(i['summary'])
         cc_logger.info("Calling cluster_status()")
         self.cluster_status(report)
+
+    def get_mon_osd_list(self, report):
+        """
+        Get the list of MONs and OSD nodes
+        """
+        pass
 
     def check_passwordless_ssh(self):
         """
@@ -240,14 +247,17 @@ class CephCheck(object):
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
     def mon_status_check(self, report):
-        print("\nMonitor status: \n")
+        print("\nMONITOR STATUS:\n")
         with open(report) as obj:
             json_obj = json.load(obj)
-            print("Mon map epoch: %s\n" % str(json_obj['monmap']['epoch']))
+            print("mon-map epoch    : {0}\n".format(str(json_obj['monmap']['epoch'])))
             for mon in json_obj['monmap']['mons']:
-                print("Monitor rank : %s" % str(mon['rank']))
-                print("Host name    : %s" % str(mon['name']))
-                print("IP Address   : %s\n" % str(mon['addr']))
+                print("Monitor rank     : {0}".format(str(mon['rank'])))
+                print("Host name        : {0}".format(str(mon['name'])))
+                print("IP Address       : {0}".format(str(mon['addr']).split(":")[0]))
+                print("Role             : {0}".format("Leader / Peon"))
+                print("Port             : {0}".format(str(mon['addr']).split(":")[1].split("/")[0]))
+                print("")
 
     def osd_status_check(self, report):
         print("\n# OSD status: \n")
