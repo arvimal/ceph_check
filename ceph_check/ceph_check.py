@@ -158,7 +158,7 @@ class CephCheck(object):
                 try:
                     # out/err gets populated if `communicate` succeeds
                     # If success, `out` won't contain anything,
-                    # since `stdout` == report file
+                    # since `stdout` == report file,
                     # and `err` = `report <report-number>`
                     # In case of failure, `err` will contain :
                     # ~~~
@@ -201,10 +201,11 @@ class CephCheck(object):
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("\nCLUSTER STATUS  : {0}".format(cluster_status))
+            print("\nCLUSTER STATUS\t : {0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
                 cc_logger.info("Cluster **NOT** HEALTHY!!")
-                print("\nSUMMARY\n")
+                print("\n- SUMMARY -\n")
+                cc_logger.info("Cluster **NOT** HEALTHY!!")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
                     cc_logger.info(i['summary'])
@@ -249,25 +250,36 @@ class CephCheck(object):
         # Note for self: Refer ceph_osd_meta.py from ceph report parse
 
     def mon_status_check(self, report):
-        print("\nMONITOR STATUS:\n")
+        print("\n\t- MONITOR STATUS -\n")
+        mon_list = []
         with open(report) as obj:
             json_obj = json.load(obj)
             print("mon-map epoch    : {0}\n".format(str(json_obj['monmap']['epoch'])))
+            print("-")
             for mon in json_obj['monmap']['mons']:
-                print("Monitor rank     : {0}".format(str(mon['rank'])))
                 print("Host name        : {0}".format(str(mon['name'])))
+                print("Rank             : {0}".format(str(mon['rank'])))
+                if str(mon['rank']) == "0":
+                    print("Role             : {0}".format("Leader"))
+                else:
+                    print("Role             : {0}".format("Peon"))
                 print("IP Address       : {0}".format(str(mon['addr']).split(":")[0]))
-                print("Role             : {0}".format("Leader / Peon"))
-                print("Port             : {0}\n".format(str(mon['addr']).split(":")[1].split("/")[0]))
+                print("Port             : {0}".format(str(mon['addr']).split(":")[1].split("/")[0]))
+                print("-")
+                cc_logger.info("{0}/{1}/{2}/{3}".format(str(mon['name']), str(mon['rank']),str(mon['addr']), str(mon['addr']).split(":")[1].split("/")[0]))
+                mon_list.append(str(mon['name']))
+        cc_logger.info("MON List : {0}".format(mon_list))
+        return mon_list
 
     def osd_status_check(self, report):
-        print("\n# OSD STATUS: \n")
+        print("\n\t- OSD STATUS -\n")
+
 
     def pool_info(self, report):
-        print("\n# PPOOL STATUS: \n")
+        print("\n\t- POOL STATUS -\n")
 
     def pg_info(self, report):
-        print("\n# PG STATUS : \n")
+        print("\n\t- PG STATUS -\n")
 
 
 if __name__ == "__main__":
