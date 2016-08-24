@@ -201,22 +201,17 @@ class CephCheck(object):
             json_obj = json.load(obj)
             cluster_status = json_obj['health']['overall_status']
             cc_logger.info("CLUSTER STATUS : {0}".format(cluster_status))
-            print("\nCLUSTER STATUS\t : {0}".format(cluster_status))
+            print("\n\t- CLUSTER STATUS -\t")
+            print("\n{0}".format(cluster_status))
             if cluster_status != "HEALTH_OK":
                 cc_logger.info("Cluster **NOT** HEALTHY!!")
-                print("\n- SUMMARY -\n")
+                print("\n\t- SUMMARY -\n")
                 cc_logger.info("Cluster **NOT** HEALTHY!!")
                 for i in json_obj['health']['summary']:
                     print(i['summary'])
                     cc_logger.info(i['summary'])
         cc_logger.info("Calling cluster_status()")
         self.cluster_status(report)
-
-    def get_mon_osd_list(self, report):
-        """
-        Get the list of MONs and OSD nodes
-        """
-        pass
 
     def check_passwordless_ssh(self):
         """
@@ -243,18 +238,13 @@ class CephCheck(object):
         cc_logger.info("Calling ssh_check()")
         self.check_passwordless_ssh()
 
-    def get_osd_and_mon(report):
-        """Get the list of MONs and OSDs from the report"""
-
-        pass
-        # Note for self: Refer ceph_osd_meta.py from ceph report parse
-
     def mon_status_check(self, report):
         print("\n\t- MONITOR STATUS -\n")
         mon_list = []
         with open(report) as obj:
             json_obj = json.load(obj)
-            print("mon-map epoch    : {0}\n".format(str(json_obj['monmap']['epoch'])))
+            print(
+                "mon-map epoch    : {0}\n".format(str(json_obj['monmap']['epoch'])))
             print("-")
             for mon in json_obj['monmap']['mons']:
                 print("Host name        : {0}".format(str(mon['name'])))
@@ -263,17 +253,34 @@ class CephCheck(object):
                     print("Role             : {0}".format("Leader"))
                 else:
                     print("Role             : {0}".format("Peon"))
-                print("IP Address       : {0}".format(str(mon['addr']).split(":")[0]))
-                print("Port             : {0}".format(str(mon['addr']).split(":")[1].split("/")[0]))
+                print("IP Address       : {0}".format(
+                    str(mon['addr']).split(":")[0]))
+                print("Port             : {0}".format(
+                    str(mon['addr']).split(":")[1].split("/")[0]))
                 print("-")
-                cc_logger.info("{0}/{1}/{2}/{3}".format(str(mon['name']), str(mon['rank']),str(mon['addr']), str(mon['addr']).split(":")[1].split("/")[0]))
+                cc_logger.info("{0}/{1}/{2}/{3}".format(str(mon['name']), str(
+                    mon['rank']), str(mon['addr']), str(mon['addr']).split(":")[1].split("/")[0]))
                 mon_list.append(str(mon['name']))
         cc_logger.info("MON List : {0}".format(mon_list))
-        return mon_list
+        self.get_osd_and_mon_list(report)
+
+    def get_osd_and_mon_list(self, report):
+        """Get the list of MONs and OSDs from the report"""
+        osds = {}
+        with open(report) as obj:
+            json_obj = json.load(obj)
+            for osd in json_obj['osdmap']['osds']:
+                osds[osd['osd']] = osd
+                pass
+        # return (mons, osds)
 
     def osd_status_check(self, report):
         print("\n\t- OSD STATUS -\n")
-
+        with open(report) as obj:
+            json_obj = json.load(obj)
+            for i in json_obj:
+                osd_id = "{0}".format(i['id'])
+                print(osd_id)
 
     def pool_info(self, report):
         print("\n\t- POOL STATUS -\n")
