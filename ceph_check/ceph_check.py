@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# ceph_check
+# Vimal A.R | arvimal@yahoo.in
+
 from __future__ import print_function
 import time
 import os
@@ -62,10 +65,10 @@ class CephCheck(object):
 
     def cc_condition(self):
         """
-        Conditions for a successfull execution of `ceph_check`
+        Conditions for a successful execution of `ceph_check`
         1. Ansible installed.
         2. Read-only access to the admin keyring.
-        2. Passwordless SSH to the cluster nodes.
+        2. Password-less SSH to the cluster nodes.
         """
         cc_logger.info("#" * 20)
         cc_logger.info("Starting ceph_check")
@@ -76,7 +79,7 @@ class CephCheck(object):
 
     def check_ansible(self):
         try:
-            cc_logger.info("Trying to load the ansible module")
+            cc_logger.info("Trying to load the Ansible module")
             import ansible
             cc_logger.info("`ansible` module loaded, package installed.")
         except ImportError as err:
@@ -93,7 +96,7 @@ class CephCheck(object):
         cc_logger.info("Reading '{0}'".format(CONF_FILE))
         config_file.read(self.conffile)
         cc_logger.info(
-            "Checking custom admin keyrings in {0}".format(CONF_FILE))
+            "Checking custom admin keyring in {0}".format(CONF_FILE))
         try:
             keyring_custom = config_file.get('global', 'keyring')
             cc_logger.info(
@@ -217,7 +220,7 @@ class CephCheck(object):
         """
         This is one of the three primary conditions for `ceph_check`.
 
-        Check passwordless SSH access to the MON and OSD nodes
+        Check password-less SSH access to the MON and OSD nodes
         """
         pass
 
