@@ -1,11 +1,8 @@
 # ceph_check
 
-Build Status
--------------
+## Build Status
 
-Build Status on Travis 
 ![Build status on Travis](https://img.shields.io/travis/arvimal/ceph_check.svg)
-
 
 ## Introduction
 
