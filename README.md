@@ -3,9 +3,9 @@
 Build Status
 -------------
 
-.. image:: https://img.shields.io/travis/arvimal/ceph_check.svg
-    :target: https://travis-ci.org/arvimal/ceph_check
-    :alt: Build status on Travis CI
+Build Status on Travis 
+![Build status on Travis](https://img.shields.io/travis/arvimal/ceph_check.svg)
+
 
 ## Introduction
 
