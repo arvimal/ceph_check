@@ -1,10 +1,17 @@
-# ceph_check 
+# ceph_check
+
+Build Status
+-------------
+
+.. image:: https://img.shields.io/travis/arvimal/ceph_check.svg
+    :target: https://travis-ci.org/arvimal/ceph_check
+    :alt: Build status on Travis CI
 
 ## Introduction
 
 `ceph_check`, in short, is a reporting tool for RHCS/Ceph clusters.
 
-* A distributed storage solution as Ceph has to be installed according to specific guide lines. 
+* A distributed storage solution as Ceph has to be installed according to specific guide lines.
 
 * This is important for optimal performance and ease of use. `ceph_check` intends to find unsupported or inoptimal configurations.
 
@@ -70,7 +77,7 @@ Refer [https://github.com/google/python-subprocess32](https://github.com/google/
 
 It may move to the logger `ceph` uses in a later stage, or may use it's own log file as it initially did.
 
-`rsyslog` dump logs which span multiple lines, as a single line. Even though `ceph_check` logs exceptions to /var/log/messages, it won't be formatted as python tracebacks would be. 
+`rsyslog` dump logs which span multiple lines, as a single line. Even though `ceph_check` logs exceptions to /var/log/messages, it won't be formatted as python tracebacks would be.
 
 For example, a ZeroDivisionError (or any other tracebacks) would look as:
 
@@ -86,7 +93,7 @@ Aug 21 19:00:30 rhel7 ceph_check: INFO: <--BUG--><--Cut here-->
 Aug 21 19:00:30 rhel7 ceph_check: ERROR: integer division or modulo by zero#012Traceback (most recent call last):#012  File "ceph_check.py", line 266, in <module>#012    checker.cc_condition()#012  File "ceph_check.py", line 72, in cc_condition#012    self.check_keyring()#012  File "ceph_check.py", line 92, in check_keyring#012    1 / 0#012ZeroDivisionError: integer division or modulo by zero
 ~~~
 
-This is due to rsyslog's behaviour of escaping newlines, tabs etc.. while logging them. 
+This is due to rsyslog's behaviour of escaping newlines, tabs etc.. while logging them.
 
 To fix this, add the following to `/etc/rsyslog.conf`, and restart `rsyslog`.
 
