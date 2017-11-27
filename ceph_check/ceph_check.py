@@ -296,7 +296,7 @@ if __name__ == "__main__":
     checker = CephCheck(CONF_FILE, ADMIN_KEYRING)
     try:
         checker.cc_condition()
-    except Exception, err:
+    except Exception as err:
         cc_logger.info("<--BUG--><--Cut here-->")
         cc_logger.exception(err, exc_info=True)
         print("Exception : {0}".format(err))
