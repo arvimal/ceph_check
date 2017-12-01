@@ -10,11 +10,13 @@ import os
 import sys
 import json
 import getpass
-# import ConfigParser
-import configparser
 import logging
 import logging.handlers
 import tempfile
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 # We need the `timeout` feature in python3 subprocess module.
 # This will need a `pip install subprocess32`.
